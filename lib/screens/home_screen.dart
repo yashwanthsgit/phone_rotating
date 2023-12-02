@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:motion_sensor/model/sounds_list.dart';
 import 'package:http/http.dart' as http;
+import 'package:sensors_plus/sensors_plus.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -12,6 +13,26 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
+  AccelerometerEvent? accelerometerEvent;
+
+  double dx = 100, dy = 100;
+  @override
+  @override
+  void initState() {
+    super.initState();
+
+    accelerometerEventStream().listen(
+      (AccelerometerEvent event) {
+        print(event);
+      },
+      onError: (error) {
+        // Logic to handle error
+        // Needed for Android in case sensor is not available
+      },
+      cancelOnError: true,
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -43,7 +64,27 @@ class _HomeScreenState extends State<HomeScreen> {
                         child: CircularProgressIndicator(),
                       );
                     } else {
-                      return const Text("data");
+                      return Text("data");
+                    }
+                  }),
+              const SizedBox(
+                height: 20,
+              ),
+              StreamBuilder<GyroscopeEvent>(
+                  stream: SensorsPlatform.instance.gyroscopeEventStream(),
+                  builder: (_, snapShot) {
+                    if (snapShot.hasData) {
+                      dx = dx + (snapShot.data!.y * 10);
+                      dy = dy + (snapShot.data!.x * 10);
+
+                      return Transform.translate(
+                        offset: Offset(dx, dy),
+                        child: const CircleAvatar(
+                          radius: 20,
+                        ),
+                      );
+                    } else {
+                      return Text("data");
                     }
                   })
             ],
